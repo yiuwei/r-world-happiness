@@ -1,0 +1,165 @@
+---
+title: "R Statistical Analysis"
+author: "Name: Yi"
+output:
+  pdf_document: default
+date: "2024-07-01"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library}
+library(ggplot2)
+library(tidyselect)
+library(dplyr)
+```
+
+## World Happiness Statistical Analysis
+
+The World Happiness Report consists of data on global happiness from over 156 countries released by the United Nations. The report has six indicators affecting the happiness index: GDP per capita, social support, healthy life expectancy, freedom, generosity, and corruption perception. The project aims to use filtering techniques, statistical modeling, data clustering, and regression models to examine the data set with the LaTeX and R programming languages. 
+
+• Load the `world_happiness.csv` file into R and rename the variables with appropriate headers.
+
+```{r overview}
+
+# import the datasets, rename the variables, and show the top ten
+happiness <- read.csv("world_happiness.csv",sep=",")
+colnames(happiness) <- c("rank","country","score","income", "support", "health", "freedom", "generosity", "perceptions")
+
+head(happiness, 10)
+```
+
+• Display the number of attributes in the World Happiness database counted by columns and rows.
+
+```{r attributes}
+
+ncol(happiness)
+nrow(happiness)
+```
+
+• Generate an overview with the `summary` function and specify whether there are zero values.
+
+```{r summary}
+
+summary(happiness)
+sum(is.na(happiness))
+```
+
+• Calculate the mean and standard deviation for the World Happiness database.
+
+-   The mean is the average calculated by adding up all the values and dividing by the total numbers using the formula  $\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i$ . The standard deviation (sd) is the distance from the mean with the formula  $\sigma = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(x_i - \mu)^2}$. The low sd value of 1.11312 means data points are closer to the mean compared to points with +2 or +3 deviation. 
+
+```{r meanSd}
+
+mean(happiness$score)
+sd(happiness$score)
+```
+
+• Display the correlation between the World Happiness attributes in the datasets.
+
+-   The Pearson correlation coefficient measures the correlation between two values. The values closer to 1 present a strong relationship, and a correlation closer to 0 suggests a weak relationship. The example shows a strong correlation between the happiness score and GDP per capita, suggesting that more income leads to a higher level of happiness. 
+
+```{r correlation}
+
+cor(happiness$score, happiness$income)
+```
+
+# Included Plots
+
+• Create a pairwise scatterplot in R that displays the relationship between the continuous variables. 
+
+-   The scatterplot shows a positive correlation between GDP per capita and the attributes (social support, healthy life expectancy, freedom, and corruption perceptions). The linear slope (upwards or downwards) between the data points indicates a positive correlation. The points that are scattered across the plot suggest a weaker relationship. 
+
+```{r pairwise}
+
+pairs(happiness[c("rank","score","income", "support", "health", "freedom", "generosity", "perceptions")])
+
+```
+
+• Create a scatter plot and histogram to show the relationship between the variables.
+
+-   The histogram displays the distribution of the happiness score based on frequency. The Normal Distribution shows that the data points are symmetrically distributed around the center, and the standard deviation is spread evenly. The normal distribution suggests that most countries have an average happiness score of 5 to 7.
+
+```{r historgram}
+
+# Histogram to show the frequency of happiness
+ggplot(happiness, aes(x = score)) +
+  geom_histogram(binwidth = 0.5, col='gray',) + 
+  labs(title = "Distribution of the Happiness Score", x = "Happiness Score", y = "Frequency")
+
+```
+
+• Create a regression analysis between the variables in the database.
+
+-   The regression model shows the relationship between the dependent and the independent variables. The distribution of the residuals is near zero indicating that the data point is approximate to a linear model. The low coefficient p-value implies that the model is statistically significant. The high Multiple R-squared values of 0.7425 and Adjusted R-squared of 0.7374 indicate a well-fit model. 
+
+```{r regression}
+
+model <- lm(score ~ income + health + freedom, data = happiness)
+summary(model)
+model
+```
+
+• Create a clustering model to display the relationship between the variables.
+
+-   The K-means clustering model aims to group similar cluster points in the World Happiness database. The data points for the four attributes: happiness score, GDP per capita, social support, and healthy life expectancy are scattered in a linear direction. This suggests that as the GDP Per Capita increases, other attributes like social support, and healthy life expectancy also increase. 
+
+```{r clustering}
+
+set.seed(123)
+clusters <- kmeans(happiness[, c("score", "income", "support", "health")], centers = 3)
+happiness$cluster <- as.factor(clusters$cluster)
+
+ggplot(happiness, aes(x = health, y = score, color = cluster)) +
+  geom_point() +
+  labs(title = "Clustering of Health vs Happiness", x = "income", y = "score")
+
+```
+
+• Create a comparative analysis to find the top countries with the highest happiness score.
+
+-   The plot shows that the places with the highest happiness score are regions in Europe including Finland, Denmark, Norway, etc. followed by other economically developed countries. 
+
+```{r comparative}
+
+country_happiness <- happiness %>%
+  group_by(country) %>%
+  summarise(mean_happiness = mean(score))
+
+top_regions <- country_happiness %>%
+  arrange(desc(mean_happiness)) %>%
+  head(10)
+
+ggplot(top_regions, aes(x = reorder(country, -mean_happiness), y = mean_happiness, fill=mean_happiness)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Average Happiness By Country", x = "country", y = "mean score") +
+  theme(axis.text.x = element_text(angle = 100, hjust = 1))
+
+```
+
+• Create a comparative analysis to find the countries with the highest health score.
+
+-   The plot shows that the places with the highest health scores are regions in East Asia including Singapore, Hong Kong, and Japan followed by Europe countries. 
+
+```{r health}
+
+country_happiness <- happiness %>%
+  group_by(country) %>%
+  summarise(mean_happiness = mean(health))
+
+top_regions <- country_happiness %>%
+  arrange(desc(mean_happiness)) %>%
+  head(10)
+
+ggplot(top_regions, aes(x = reorder(country, -mean_happiness), y = mean_happiness, fill = mean_happiness)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Average Happiness By Country", x = "country", y = "mean score") +
+  theme(axis.text.x = element_text(angle = 100, hjust = 1))
+
+```
+
+# Conclusion
+
+In conclusion, the result shows that the attribute income (GDP per capita) positively influenced the happiness score in the country. This means that improving the GDP per capita for each country will also increase the country's happiness index, and permit individuals to access more resources. Economic resources in the country improve the quality of life for most people and influence other criteria including life expectancy, social support, freedom, and safety.
